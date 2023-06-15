@@ -1,5 +1,7 @@
 import os
 
+import bot_logic
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -18,15 +20,15 @@ from tensorflow.python.keras import backend as K
 
 import IPython.display
 
-img_dir = 'D:/Uni/Course_work/img'
+img_dir = 'C:/Users/Egor/PycharmProjects/CourseWork(5 term)/img'
 if not os.path.exists(img_dir):
     os.makedirs(img_dir)
 
 mpl.rcParams['figure.figsize'] = (10, 10)
 mpl.rcParams['axes.grid'] = False
 
-content_path = 'D:/Uni/Course_work/img/_DSC5440.jpg'
-style_path = 'D:/Uni/Course_work/img/1071px-Tsunami_by_hokusai_19th_century.jpg'
+content_path = 'C:/Users/Egor/PycharmProjects/CourseWork(5 term)/img/photo/photos/20221219-181935-059823.jpg'
+style_path = 'C:/Users/Egor/PycharmProjects/CourseWork(5 term)/img/style/photos/20221219-181957-386845.jpg'
 
 
 def load_img(path_to_image):
@@ -34,7 +36,7 @@ def load_img(path_to_image):
     img = Image.open(path_to_image)
     long = max(img.size)
     scale = max_dim / long
-    img = img.resize((round(img.size[0] * scale), round(img.size[1] * scale)), Image.LANCZOS)
+    img = img.resize((round(img.size[0] * scale), round(img.size[1] * scale)), Image.Resampling.LANCZOS)
 
     img = tf.keras.preprocessing.image.img_to_array(img)
 
@@ -53,6 +55,8 @@ def imshow(img, title=None):
         plt.title(title)
     plt.imshow(out)
 
+
+print("Eager execution: {}".format(tf.executing_eagerly()))
 
 plt.figure(figsize=(10, 10))
 content = load_img(content_path).astype('uint8')
@@ -240,7 +244,7 @@ def compute_grads(cfg):
 
 def run_style_transfer(content_path,
                        style_path,
-                       num_iterations=200,
+                       num_iterations=10,
                        content_weight=1e3,
                        style_weight=1e-2):
     # We don't need to (or want to) train any layers of our model, so we set their
@@ -296,7 +300,7 @@ def run_style_transfer(content_path,
         end_time = time.time()
 
         if loss < best_loss:
-            # Update best loss and best image from total loss.
+            # Update the best loss and best image from total loss.
             best_loss = loss
             best_img = deprocess_img(init_image.numpy())
 
@@ -315,6 +319,7 @@ def run_style_transfer(content_path,
                   'content loss: {:.4e}, '
                   'time: {:.4f}s'.format(loss, style_score, content_score, time.time() - start_time))
     print('Total time: {:.4f}s'.format(time.time() - global_start))
+
     IPython.display.clear_output(wait=True)
     plt.figure(figsize=(14, 4))
     for i, img in enumerate(imgs):
@@ -323,11 +328,13 @@ def run_style_transfer(content_path,
         plt.xticks([])
         plt.yticks([])
 
+    plt.imsave('best.png', best_img)
+
     return best_img, best_loss
 
 
 best, best_loss = run_style_transfer(content_path,
-                                     style_path, num_iterations=200)
+                                     style_path, num_iterations=20)
 
 Image.fromarray(best)
 
@@ -344,9 +351,10 @@ def show_results(best_img, content_path, style_path, show_large_final=True):
     imshow(style, 'Style Image')
 
     if show_large_final:
-        plt.figure(figsize=(10, 10))
-
-        plt.imshow(best_img)
+        plt.figure()
+        plt.imshow(best_img, interpolation='nearest')
+        plt.axis('off')
+        plt.savefig('best2.png', dpi=1000)
         plt.title('Output Image')
         plt.show()
 
